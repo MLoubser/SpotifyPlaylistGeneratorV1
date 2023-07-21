@@ -1,0 +1,28 @@
+﻿@using SpotifyPlaylistGeneratorV1.Interfaces
+@model Testing.EncryptTest;
+@inject ISpotify spotifyService
+
+@{
+    ViewData["Title"] = "Home Page";
+    var QueryString = "https://accounts.spotify.com/en/authorize?response_type=code&client_id=76623078c10148308eb92c137dd0cde6&scope=playlist-modify-private&redirect_uri=https://localhost:7000/callback&state=1234567890";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    
+    @if(spotifyService.IsLoggedIn())
+    {
+        <p>You are logged into spotify</p>
+    }
+    else
+    {
+        <a href="@spotifyService.GenerateSignupLink()">Log in with spotify</a>
+    }
+    
+
+    <p>First String: @Model.FirstString</p>
+    <p>Encrypted String: @Model.EncryptedString</p>
+    <p>Decrypted string: @Model.OutputString</p>
+
+</div>

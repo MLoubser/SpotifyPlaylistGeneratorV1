@@ -1,0 +1,44 @@
+﻿@model SpotifyPlaylistGeneratorV1.Models.Views.RegisterViewModel;
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="row mt-5">
+    <div class="col-sm-4 offset-sm-4 card border-primary p-3">
+        <h2 class="display-6">@ViewData["Title"]</h2>
+        <form method="post">
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="FirstName"></label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="LastName"></label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="form-control" aria-describedby="emailHelp" />
+                <div id="emailHelp" class="form-text">We'll never share your email with anyone</div>
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword"></label>
+                <input asp-for="ConfirmPassword" class="form-control" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+            <input type="submit" class="btn btn-primary btn-sm" value="Register" />
+        </form>
+    </div>
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

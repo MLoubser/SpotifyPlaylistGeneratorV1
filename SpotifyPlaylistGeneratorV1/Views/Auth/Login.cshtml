@@ -1,0 +1,25 @@
+﻿@model SpotifyPlaylistGeneratorV1.Models.Views.LoginViewModel;
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="row mt-5">
+    <div class="col-sm-4 offset-sm-4 card border-primary p-3">
+        <h2 class="display-6">@ViewData["Title"]</h2>
+        <form method="post">
+            @{/*<div asp-validation-summary="All" class="text-danger"></div>*/}
+            <div class="mb-3">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="form-control" placeholder="Email address" autocomplete="off" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" class="form-control" placeholder="Password" autocomplete="off" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <input type="submit" class="btn btn-primary btn-sm col-sm-12" value="Login" />
+        </form>
+    </div>
+</div>
