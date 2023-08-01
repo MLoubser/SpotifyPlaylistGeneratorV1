@@ -25,8 +25,6 @@ namespace SpotifyPlaylistGeneratorV1.Services
         private readonly string REQUIRED_SCOPE;
         
         private readonly ILogger<SpotifyV1> _logger;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly HttpClient httpClient;
         private readonly IStringEncryptionService _stringEncryptionService;
@@ -36,12 +34,11 @@ namespace SpotifyPlaylistGeneratorV1.Services
         private byte[]? encryptedRefreshToken { get; set; } = null;
         private bool isSignedIn { get; set; } = false;
         private string? userExternalId { get; set; } = null;
+        private string UserName { get; set; } = string.Empty;
 
-        public SpotifyV1(ILogger<SpotifyV1> logger, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IHttpContextAccessor contextAccessor, IStringEncryptionService stringEncryptionService, ApplicationDbContext dbContext, IConfiguration configuration)
+        public SpotifyV1(ILogger<SpotifyV1> logger, IHttpContextAccessor contextAccessor, IStringEncryptionService stringEncryptionService, ApplicationDbContext dbContext, IConfiguration configuration)
         {
             _logger = logger;
-            _userManager = userManager;
-            _signInManager = signInManager;
             _httpContextAccessor = contextAccessor;
             _stringEncryptionService = stringEncryptionService;
             _dbContext = dbContext;
@@ -67,17 +64,14 @@ namespace SpotifyPlaylistGeneratorV1.Services
             httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri(BASE_URL);
 
-            //httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "APITOKEN");
-
-
-            InitializeComponent().Wait();
+            InitializeComponentAsync().Wait();
         }
 
-        private async Task<bool> InitializeComponent()
+        public async Task<bool> InitializeComponentAsync(string? userNameWithoutContext = null)
         {
             isSignedIn = false;
 
-            string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
+            UserName = userNameWithoutContext ?? _httpContextAccessor.HttpContext?.User.Identity?.Name ?? String.Empty;
 
             var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
 
@@ -183,7 +177,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
 
         private async Task<bool> ClearTokens()
         {
-            string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
+            //string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
 
             var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
 
@@ -234,7 +228,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
 
                     if(Data != null)
                     {
-                        string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
+                        //string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
 
                         var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
 
@@ -297,7 +291,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
 
                 if (Data != null)
                 {
-                    string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
+                    //string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
 
                     var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
 

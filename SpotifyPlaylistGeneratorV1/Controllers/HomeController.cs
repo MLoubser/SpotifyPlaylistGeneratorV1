@@ -10,12 +10,14 @@ namespace SpotifyPlaylistGeneratorV1.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly IStringEncryptionService _stringEncryption;
         private readonly ISpotify _spotify;
+        private readonly IPlaylistCreateQueue _playlistQueue;
 
-        public HomeController(ILogger<HomeController> logger, IStringEncryptionService stringEncryptionService, ISpotify spotify)
+        public HomeController(ILogger<HomeController> logger, IStringEncryptionService stringEncryptionService, ISpotify spotify, IPlaylistCreateQueue playlistQueue)
         {
             _logger = logger;
             _stringEncryption = stringEncryptionService;
             _spotify = spotify;
+            _playlistQueue = playlistQueue;
         }
 
         public async Task<IActionResult> Index()
@@ -26,8 +28,21 @@ namespace SpotifyPlaylistGeneratorV1.Controllers
 
             var decryptedString = await _stringEncryption.DecryptStringAsync(Convert.FromBase64String(encrypted));
 
-            var createdPlaylist = _spotify.CreateNewPlaylist("Testing Playlist");
-                 
+            //var createdPlaylist = _spotify.CreateNewPlaylist("Testing Playlist");
+
+            await _playlistQueue.EnqueueItemAsync(new Models.BackgroundService.PlaylistRequestItem
+            {
+                UserName = HttpContext?.User.Identity?.Name ?? "",
+                YouTubeUrl = "Test 3"
+            });
+
+            await _playlistQueue.EnqueueItemAsync(new Models.BackgroundService.PlaylistRequestItem
+            {
+                UserName = HttpContext?.User.Identity?.Name ?? "",
+                YouTubeUrl = "Test 4"
+            });
+
+
             return View(new Testing.EncryptTest
             {
                 FirstString = TestString,

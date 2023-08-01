@@ -21,8 +21,17 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(opt => {
     opt.SignIn.RequireConfirmedPhoneNumber = false;
 }).AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddScoped<IStringEncryptionService, StringEncryptionService>();
+builder.Services.AddSingleton<IStringEncryptionService, StringEncryptionService>();
 builder.Services.AddScoped<ISpotify, SpotifyV1>();
+builder.Services.AddSingleton<IPlaylistCreateQueue>(ctx => {
+    if (!int.TryParse(builder.Configuration["ServiceQueueCapacity"], out int capacity))
+    {
+        capacity = 100;     //If no capacity set -> limit to 100
+    }
+    return new PlaylistCreateQueue(capacity);
+});
+
+builder.Services.AddHostedService<CreatePlaylistService>();
 
 //Force auth on all controllers
 builder.Services.AddMvc(options =>
