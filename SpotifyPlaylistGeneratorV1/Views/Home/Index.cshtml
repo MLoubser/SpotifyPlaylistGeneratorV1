@@ -1,5 +1,4 @@
 ﻿@using SpotifyPlaylistGeneratorV1.Interfaces
-@model Testing.EncryptTest;
 @inject ISpotify spotifyService
 
 @{
@@ -19,9 +18,5 @@
         <a href="@spotifyService.GenerateSignupLink()">Log in with spotify</a>
     }
     
-
-    <p>First String: @Model.FirstString</p>
-    <p>Encrypted String: @Model.EncryptedString</p>
-    <p>Decrypted string: @Model.OutputString</p>
 
 </div>

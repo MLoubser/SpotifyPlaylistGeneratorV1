@@ -1,8 +1,5 @@
 ﻿using SpotifyPlaylistGeneratorV1.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using SpotifyPlaylistGeneratorV1.Authentication;
-using System.Web;
-using System.Security.Claims;
 using SpotifyPlaylistGeneratorV1.Models.Spotify;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +25,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly HttpClient httpClient;
         private readonly IStringEncryptionService _stringEncryptionService;
-        private readonly ApplicationDbContext _dbContext;
+        private readonly ISpotifyUserRepository _spotifyUserRepository;
 
         private byte[]? encryptedApiKey { get; set; } = null;
         private byte[]? encryptedRefreshToken { get; set; } = null;
@@ -36,12 +33,12 @@ namespace SpotifyPlaylistGeneratorV1.Services
         private string? userExternalId { get; set; } = null;
         private string UserName { get; set; } = string.Empty;
 
-        public SpotifyV1(ILogger<SpotifyV1> logger, IHttpContextAccessor contextAccessor, IStringEncryptionService stringEncryptionService, ApplicationDbContext dbContext, IConfiguration configuration)
+        public SpotifyV1(ILogger<SpotifyV1> logger, IHttpContextAccessor contextAccessor, IStringEncryptionService stringEncryptionService, ISpotifyUserRepository spotifyUserRepository, IConfiguration configuration)
         {
             _logger = logger;
             _httpContextAccessor = contextAccessor;
             _stringEncryptionService = stringEncryptionService;
-            _dbContext = dbContext;
+            _spotifyUserRepository = spotifyUserRepository;
 
             var config = configuration.GetSection("SpotifyConfig").Get<SpotifyConfigModel>();
 
@@ -73,7 +70,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
 
             UserName = userNameWithoutContext ?? _httpContextAccessor.HttpContext?.User.Identity?.Name ?? String.Empty;
 
-            var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
+            var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _spotifyUserRepository.FetchUserFromUsernameAsync(UserName) : null;
 
             if(currentUser != null)
             {
@@ -113,28 +110,15 @@ namespace SpotifyPlaylistGeneratorV1.Services
             //Create entry for current User
             else if(!string.IsNullOrEmpty(UserName))
             {
-               
-                await _dbContext.SpotifyUser.AddAsync(new ()
-                {
-                    UserName = UserName,
-                });
+                await _spotifyUserRepository.AddUserAsync(new() { UserName = UserName });
 
-                try
-                {
-                    await _dbContext.SaveChangesAsync();
-                }
-                catch(Exception e)
-                {
-                    //TODO: Handle Exception
-                    _logger.LogError(e, "InitializeComponent - Failed to save db context");
-                }
             }
 
             if(isSignedIn)
             {
                 httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer",await _stringEncryptionService.DecryptStringAsync(encryptedApiKey ?? Array.Empty<byte>()) ?? "");
 
-                currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
+                currentUser = (!String.IsNullOrEmpty(UserName)) ? await _spotifyUserRepository.FetchUserFromUsernameAsync(UserName) : null;
 
                 if(currentUser != null && currentUser.ExternalId == null)
                 {
@@ -144,17 +128,11 @@ namespace SpotifyPlaylistGeneratorV1.Services
                     {
                         currentUser.ExternalId = userDetails.id;
 
-                        _dbContext.Entry(currentUser).State = EntityState.Modified;
+                        var result = await _spotifyUserRepository.UpdateUserAsync(currentUser);
 
-                        try
+                        if(result)
                         {
-                            await _dbContext.SaveChangesAsync();
                             userExternalId = currentUser.ExternalId;
-                        }
-                        catch (Exception e)
-                        {
-                            //TODO: Handle Exception
-                            _logger.LogError(e, "InitializeComponent - Failed to save db context");
                         }
                     }
                     else
@@ -177,35 +155,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
 
         private async Task<bool> ClearTokens()
         {
-            //string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
-
-            var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
-
-            if (currentUser != null)
-            {
-                currentUser.ApiToken = null;
-                currentUser.RefreshToken = null;
-                currentUser.TokenExpireDate = null;
-
-
-                _dbContext.Entry(currentUser).State = EntityState.Modified;
-
-                try
-                {
-                    await _dbContext.SaveChangesAsync();
-
-                    encryptedApiKey = null;
-                    encryptedRefreshToken = null;
-                    isSignedIn = false;
-                }
-                catch (Exception e)
-                {
-                    //TODO: Handle Exception
-                    _logger.LogError(e, "ClearTokens - Failed to save db context");
-                }
-            }
-            
-            return true;
+            return await _spotifyUserRepository.ClearUserTokensAsync(UserName);
         }
 
 
@@ -230,7 +180,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
                     {
                         //string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
 
-                        var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
+                        var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _spotifyUserRepository.FetchUserFromUsernameAsync(UserName) : null;
 
                         byte[] encryptedBytes = await _stringEncryptionService.EncryptStringAsync(Data.access_token);
 
@@ -239,20 +189,13 @@ namespace SpotifyPlaylistGeneratorV1.Services
                             currentUser.ApiToken = Convert.ToBase64String(encryptedBytes);
                             currentUser.TokenExpireDate = DateTime.Now.AddSeconds(Data.expires_in);
 
-                            _dbContext.Entry(currentUser).State = EntityState.Modified;
+                            var Result = await _spotifyUserRepository.UpdateUserAsync(currentUser);
 
-                            try
+                            if(!Result)
                             {
-                                await _dbContext.SaveChangesAsync();
-                            }
-                            catch(Exception e)
-                            {
-                                //TODO: Handle Exception
-                                _logger.LogError(e, "GetNewTokenFromRefreshToken - Failed to save db context");
-
                                 return false;
                             }
-                            
+                         
                         }
 
                         encryptedApiKey = encryptedBytes;
@@ -293,7 +236,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
                 {
                     //string UserName = _httpContextAccessor.HttpContext?.User.Identity?.Name ?? "";
 
-                    var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _dbContext.SpotifyUser.FirstOrDefaultAsync(x => x.UserName == UserName) : null;
+                    var currentUser = (!String.IsNullOrEmpty(UserName)) ? await _spotifyUserRepository.FetchUserFromUsernameAsync(UserName) : null;
 
                     byte[] encAccessToken = await _stringEncryptionService.EncryptStringAsync(Data.access_token);
                     byte[] encRefreshToken = await _stringEncryptionService.EncryptStringAsync(Data.refresh_token);
@@ -304,17 +247,10 @@ namespace SpotifyPlaylistGeneratorV1.Services
                         currentUser.RefreshToken = Convert.ToBase64String(encRefreshToken);
                         currentUser.TokenExpireDate = DateTime.Now.AddSeconds(Data.expires_in);
 
-                        _dbContext.Entry(currentUser).State = EntityState.Modified;
+                        var Result = await _spotifyUserRepository.UpdateUserAsync(currentUser);
 
-                        try
+                        if(!Result)
                         {
-                            await _dbContext.SaveChangesAsync();
-                        }
-                        catch(Exception e)
-                        {
-                            //TODO: Handle Exception
-                            _logger.LogError(e, "GetAccessTokens - Failed to save db context");
-
                             return false;
                         }
 

@@ -22,13 +22,6 @@ namespace SpotifyPlaylistGeneratorV1.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var TestString = "First encrypt test";
-
-            var encrypted = Convert.ToBase64String(await _stringEncryption.EncryptStringAsync(TestString));
-
-            var decryptedString = await _stringEncryption.DecryptStringAsync(Convert.FromBase64String(encrypted));
-
-            //var createdPlaylist = _spotify.CreateNewPlaylist("Testing Playlist");
 
             await _playlistQueue.EnqueueItemAsync(new Models.BackgroundService.PlaylistRequestItem
             {
@@ -43,12 +36,7 @@ namespace SpotifyPlaylistGeneratorV1.Controllers
             });
 
 
-            return View(new Testing.EncryptTest
-            {
-                FirstString = TestString,
-                EncryptedString = encrypted,
-                OutputString = decryptedString
-            });
+            return View();
         }
 
         public IActionResult Privacy()
@@ -61,18 +49,5 @@ namespace SpotifyPlaylistGeneratorV1.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
-    }
-}
-
-
-
-
-namespace Testing
-{
-    public class EncryptTest
-    {
-        public string FirstString { get; set; }
-        public string EncryptedString { get; set; }
-        public string OutputString { get; set; }
     }
 }

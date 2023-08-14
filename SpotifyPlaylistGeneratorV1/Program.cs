@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using SpotifyPlaylistGeneratorV1.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +23,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(opt => {
 }).AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddSingleton<IStringEncryptionService, StringEncryptionService>();
+builder.Services.AddScoped<ISpotifyUserRepository, SpotifyUserRepository>();
 builder.Services.AddScoped<ISpotify, SpotifyV1>();
+builder.Services.AddScoped<IYoutube, YoutubeV1>();
 builder.Services.AddSingleton<IPlaylistCreateQueue>(ctx => {
     if (!int.TryParse(builder.Configuration["ServiceQueueCapacity"], out int capacity))
     {
