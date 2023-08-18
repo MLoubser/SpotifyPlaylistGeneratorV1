@@ -2,10 +2,12 @@
 {
     public interface ISpotify
     {
-        public bool IsLoggedIn();
-        public string GenerateSignupLink(string? CSRFToken = null);
+        bool IsLoggedIn();
+        string GenerateSignupLink(string? CSRFToken = null);
         public Task<bool> GetAccessTokens(string accessCode);
-        public Task<bool> CreateNewPlaylist(string PlaylistName, string? PlaylistDescription = null, bool PublicPlaylist = false);
-        public Task<bool> InitializeComponentAsync(string? userNameWithoutContext = null);
+        Task<string?> CreateNewPlaylistAsync(string PlaylistName, string? PlaylistDescription = null, bool PublicPlaylist = false);
+        Task<bool> InitializeComponentAsync(string? userNameWithoutContext = null);
+        Task<string?> GetSpotifyInternalIdFromDescriptionAsync(string trackDescription);
+        Task<bool> AddTracksToPlaylistAsync(string playlistId, List<string> ItemIds);
     }
 }

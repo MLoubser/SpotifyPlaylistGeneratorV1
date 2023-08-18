@@ -2,6 +2,7 @@
 {
     public interface IYoutube
     {
-        public Task<string?> FetchVideoDescriptionByIdAsync(string videoId);
+        Task<string?> FetchVideoDescriptionByIdAsync(string videoId);
+        List<string> ProcessDescriptionForTrackList(string? videoDescription, bool artistFirst = true);
     }
 }

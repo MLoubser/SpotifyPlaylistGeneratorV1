@@ -2,8 +2,8 @@
 {
     public interface IStringEncryptionService
     {
-        public Task<byte[]> EncryptStringAsync(string cleartext);
-        public Task<string?> DecryptStringAsync(byte[] encryptedText);
+        Task<byte[]> EncryptStringAsync(string cleartext);
+        Task<string?> DecryptStringAsync(byte[] encryptedText);
 
     }
 }

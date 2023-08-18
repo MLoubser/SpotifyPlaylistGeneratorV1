@@ -32,12 +32,46 @@ namespace SpotifyPlaylistGeneratorV1.Services
                 {
                     using (var scope = ServiceProvider.CreateScope())
                     {
-                        var SpotifyInstance = scope.ServiceProvider.GetRequiredService<ISpotify>();
+                        var spotifyInstance = scope.ServiceProvider.GetRequiredService<ISpotify>();
+                        var youtubeInstance = scope.ServiceProvider.GetRequiredService<IYoutube>();
 
-                        if(SpotifyInstance != null)
+                        if (spotifyInstance != null && youtubeInstance != null)
                         {
-                            await SpotifyInstance.InitializeComponentAsync(newTask.UserName);
-                            await SpotifyInstance.CreateNewPlaylist(newTask.YouTubeUrl);
+                            var listOfDescriptionItems = youtubeInstance.ProcessDescriptionForTrackList(await youtubeInstance.FetchVideoDescriptionByIdAsync(newTask.YouTubeUrl));
+                            
+                            if(listOfDescriptionItems.Count > 0)
+                            {
+                                await spotifyInstance.InitializeComponentAsync(newTask.UserName);
+                                var playlistId = await spotifyInstance.CreateNewPlaylistAsync(newTask.PlaylistName);
+
+                                if (playlistId != null)
+                                {
+                                    var listOfTrackIds = new List<string>();
+
+                                    foreach (var item in listOfDescriptionItems)
+                                    {
+                                        var id = await spotifyInstance.GetSpotifyInternalIdFromDescriptionAsync(item);
+
+                                        if (id != null)
+                                        {
+                                            listOfTrackIds.Add(id);
+                                        }
+                                    }
+
+                                    if (listOfTrackIds.Count > 0)
+                                    {
+                                        var addResult = await spotifyInstance.AddTracksToPlaylistAsync(playlistId, listOfTrackIds);
+
+                                    }
+                                    else
+                                    {
+                                        _logger.LogWarning("Background service - Failed to find any spotify Items for request");
+                                    }
+                                }
+
+                            }
+                            
+                            
                         }
                     }
                 }

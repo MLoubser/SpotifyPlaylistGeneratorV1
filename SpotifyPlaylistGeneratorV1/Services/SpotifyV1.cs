@@ -4,6 +4,7 @@ using SpotifyPlaylistGeneratorV1.Models.Spotify;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using SpotifyPlaylistGeneratorV1.Models.Config;
+using System.Runtime.CompilerServices;
 
 namespace SpotifyPlaylistGeneratorV1.Services
 {
@@ -144,9 +145,6 @@ namespace SpotifyPlaylistGeneratorV1.Services
                 {
                     userExternalId = currentUser.ExternalId;
                 }
-
-                //Check if user details is populated from /me
-
             }
                
             return true;
@@ -293,7 +291,7 @@ namespace SpotifyPlaylistGeneratorV1.Services
             return null;
         }
 
-        public async Task<bool> CreateNewPlaylist(string PlaylistName, string? PlaylistDescription = null, bool PublicPlaylist = false)
+        public async Task<string?> CreateNewPlaylistAsync(string PlaylistName, string? PlaylistDescription = null, bool PublicPlaylist = false)
         {
             if(isSignedIn)
             {
@@ -313,19 +311,80 @@ namespace SpotifyPlaylistGeneratorV1.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var data = response.Content.ReadFromJsonAsync<CreatePlaylistResponseModel>();
+                    var data = await response.Content.ReadFromJsonAsync<CreatePlaylistResponseModel>();
 
                     if(data != null)
                     {
-                        return true;
+                        return data.id;
                     }
                 }
                
                 _logger.LogWarning("Failed to create new playlist - SpotifyService");
                 
             }
+            return null;
+        }
+
+        public async Task<string?> GetSpotifyInternalIdFromDescriptionAsync(string trackDescription)
+        {
+            if(isSignedIn)
+            {
+                var requestUrl = $"search?q={/*"track:" +*/ trackDescription}&type=track&limit=1";
+
+                var response = await httpClient.GetAsync(requestUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                     var responseObj = await response.Content.ReadFromJsonAsync<SearchRequestResponseModel>();
+
+                    if(responseObj != null && responseObj.tracks.items.Length > 0)
+                    {
+                        _logger.LogInformation($"SpotifyService - Found id for search: {trackDescription}    \nArtist: {responseObj.tracks.items.FirstOrDefault()?.artists.FirstOrDefault()?.name}  \nTitle: {responseObj.tracks.items.FirstOrDefault()?.name}");
+                        
+                        return responseObj.tracks.items.FirstOrDefault()?.id;
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to get Internal Id from description - SpotifyService");
+                }
+            }
+
+            return null;
+        }
+
+        public async Task<bool> AddTracksToPlaylistAsync(string playlistId, List<string> ItemIds)
+        {
+            if (isSignedIn && ItemIds.Count > 0)
+            {
+                var request = new AddToPlaylistRequestModel()
+                {
+                    uris = new List<string>(),
+                    position = 0
+                };
+
+                foreach (var item in ItemIds)
+                {
+                    request.uris.Add(FormatTrackItemId(item));
+                }
+
+
+                var response = await httpClient.PostAsJsonAsync($"playlists/{playlistId}/tracks", request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<AddToPlaylistResponseModel>();
+
+                    if (data != null)
+                    {
+                        return true;
+                    }
+                }
+            }
             return false;
         }
+
+        private string FormatTrackItemId(string itemId) => $"spotify:track:{itemId}";
 
         public bool IsLoggedIn()
         {

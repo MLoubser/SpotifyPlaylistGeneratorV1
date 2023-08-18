@@ -4,7 +4,7 @@ namespace SpotifyPlaylistGeneratorV1.Interfaces
 {
     public interface IPlaylistCreateQueue
     {
-        public Task<bool> EnqueueItemAsync(PlaylistRequestItem item);
-        public Task<PlaylistRequestItem?> DequeueItemAsync(CancellationToken cancellationToken);
+        Task<bool> EnqueueItemAsync(PlaylistRequestItem item);
+        Task<PlaylistRequestItem?> DequeueItemAsync(CancellationToken cancellationToken);
     }
 }
