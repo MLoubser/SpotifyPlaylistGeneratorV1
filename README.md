@@ -42,18 +42,18 @@ The end user can use the register and login screens to create an account in the 
 ### Log in to Spotify
 When you sign in the first time you need to give this app permission from Spotify to create playlists. 
 
-![Dashboard_WithoutSFSignIn](https://github.com/Slakkiii/SpotifyPlaylistGeneratorV1/assets/108271978/ae1b797b-f931-4ddc-9889-b6aff65435c0)
+![Dashboard_WithoutSFSignIn](https://github.com/MLoubser/SpotifyPlaylistGeneratorV1/assets/108271978/65a56bda-abfa-4b84-8425-12f95d7a21ed)
 
 On the dashboard you will see a link to "Log in with spotify", this will redirect you to Spotify. 
 
-![SpotifyAuthScreen](https://github.com/Slakkiii/SpotifyPlaylistGeneratorV1/assets/108271978/ab0b222c-b215-443c-a1c5-28cb63c0bae3)
+![SpotifyAuthScreen](https://github.com/MLoubser/SpotifyPlaylistGeneratorV1/assets/108271978/a846a6bf-e79c-4aed-b134-ca7edc1206ff)
 
 You will be redirected to the home page after giving authorization from Spotify. Note the text now says you are logged into spotify.
 
 ### Create Playlist
 Every time you reach the home controller it will (attempt) to create the playlist as configured above. You should be able to see the playlist(s) created in spotify:
 
-![SpotifyPlaylistGenerated](https://github.com/Slakkiii/SpotifyPlaylistGeneratorV1/assets/108271978/65b45c46-1ef5-43f6-a9bc-1bd33b2b33fc)
+![SpotifyPlaylistGenerated](https://github.com/MLoubser/SpotifyPlaylistGeneratorV1/assets/108271978/c8e5f54b-4670-4b34-969f-3f2255d8ad0c)
 
 ## TODO Items:
 - [x] Implement core functionality as proof of concept
